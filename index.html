@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Del Bravo Erectors — Emergency Contact Form</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a2744;line-height:1.5}
+.container{max-width:640px;margin:0 auto;padding:16px}
+.header{text-align:center;padding:24px 16px;background:linear-gradient(135deg,#1a2744 0%,#2c5282 100%);border-radius:12px 12px 0 0;color:#fff}
+.header img{width:200px;margin-bottom:8px}
+.header h1{font-size:18px;font-weight:700;margin:8px 0 4px}
+.header p{font-size:12px;color:#c8a451;letter-spacing:1px}
+.form-body{background:#fff;padding:24px 20px;border-radius:0 0 12px 12px;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.section{margin-bottom:24px;padding-bottom:20px;border-bottom:2px solid #e8ecf1}
+.section:last-child{border-bottom:none;margin-bottom:0}
+.section-title{font-size:15px;font-weight:700;color:#1a2744;margin-bottom:16px;padding-left:8px;border-left:3px solid #c8a451}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:4px}
+.field label span{font-weight:400;color:#999;font-size:11px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:15px;color:#1a2744;background:#fafbfc;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#c8a451;background:#fff}
+.field textarea{resize:vertical;min-height:60px}
+.row{display:flex;gap:12px}
+.row .field{flex:1}
+.checkbox-group{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.checkbox-group input[type=checkbox]{width:18px;height:18px;accent-color:#c8a451}
+.checkbox-group label{font-size:13px;font-weight:500;margin-bottom:0}
+.consent{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:20px;font-size:12px;color:#555;line-height:1.6}
+.consent strong{color:#1a2744}
+.btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#c8a451 0%,#b8943e 100%);color:#fff;font-size:16px;font-weight:700;border:none;border-radius:10px;cursor:pointer;letter-spacing:.5px;transition:opacity .2s}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.98)}
+.footer{text-align:center;padding:16px;font-size:11px;color:#999}
+.required::after{content:" *";color:#e53e3e}
+.success{display:none;text-align:center;padding:40px 20px;background:#fff;border-radius:0 0 12px 12px}
+.success h2{color:#38a169;font-size:22px;margin-bottom:8px}
+.success p{color:#555}
+@media(max-width:500px){.row{flex-direction:column;gap:0}.container{padding:8px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🏗️ DEL BRAVO ERECTORS LLC</h1>
+<p>STRUCTURAL STEEL ERECTION • EL PASO, TX</p>
+<h1 style="font-size:16px;margin-top:12px;color:#c8a451">EMERGENCY CONTACT FORM</h1>
+<p style="color:#ddd;font-size:11px;margin-top:4px">Formulario de Contacto de Emergencia</p>
+</div>
+
+<div class="form-body" id="formBody">
+<form id="emergencyForm">
+
+<div class="section">
+<div class="section-title">👤 Employee Information / Información del Empleado</div>
+<div class="field">
+<label class="required">Full Name / Nombre completo</label>
+<input type="text" name="full_name" required>
+</div>
+<div class="row">
+<div class="field">
+<label class="required">Date of Birth / Fecha de nacimiento</label>
+<input type="date" name="dob" required>
+</div>
+<div class="field">
+<label class="required">Cell Phone / Teléfono celular</label>
+<input type="tel" name="phone" required placeholder="(915) 555-1234">
+</div>
+</div>
+<div class="field">
+<label class="required">Address / Dirección</label>
+<input type="text" name="address" required placeholder="123 Main St">
+</div>
+<div class="row">
+<div class="field">
+<label class="required">City / Ciudad</label>
+<input type="text" name="city" required placeholder="El Paso">
+</div>
+<div class="field">
+<label>State / Estado</label>
+<input type="text" name="state" value="TX">
+</div>
+<div class="field">
+<label>ZIP</label>
+<input type="text" name="zip" placeholder="79901">
+</div>
+</div>
+<div class="row">
+<div class="field">
+<label class="required">Position / Puesto</label>
+<select name="position" required>
+<option value="">Select / Seleccione</option>
+<option value="Welder">Welder / Soldador</option>
+<option value="Welder Apprentice">Welder Apprentice / Aprendiz</option>
+<option value="Crane Operator">Crane Operator / Operador de Grúa</option>
+<option value="Crane OP Apprentice">Crane OP Apprentice / Aprendiz Grúa</option>
+<option value="Foreman">Foreman / Capataz</option>
+<option value="Supervisor">Supervisor</option>
+<option value="Safety Coordinator">Safety Coordinator</option>
+<option value="Connector">Connector / Conector</option>
+<option value="Ironworker">Ironworker / Fierrero</option>
+<option value="Other">Other / Otro</option>
+</select>
+</div>
+<div class="field">
+<label>Hire Date / Fecha de contratación</label>
+<input type="date" name="hire_date">
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">🚨 Primary Emergency Contact / Contacto Principal</div>
+<div class="field">
+<label class="required">Full Name / Nombre completo</label>
+<input type="text" name="ec1_name" required>
+</div>
+<div class="row">
+<div class="field">
+<label class="required">Relationship / Parentesco</label>
+<select name="ec1_relationship" required>
+<option value="">Select / Seleccione</option>
+<option value="Spouse">Spouse / Esposa(o)</option>
+<option value="Parent">Parent / Padre/Madre</option>
+<option value="Sibling">Sibling / Hermano(a)</option>
+<option value="Child">Child / Hijo(a)</option>
+<option value="Friend">Friend / Amigo(a)</option>
+<option value="Other">Other / Otro</option>
+</select>
+</div>
+<div class="field">
+<label class="required">Cell Phone / Teléfono celular</label>
+<input type="tel" name="ec1_phone" required placeholder="(915) 555-1234">
+</div>
+</div>
+<div class="field">
+<label>Alternate Phone / Teléfono alterno</label>
+<input type="tel" name="ec1_phone_alt" placeholder="Optional / Opcional">
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">🚨 Secondary Emergency Contact / Contacto Secundario</div>
+<div class="field">
+<label class="required">Full Name / Nombre completo</label>
+<input type="text" name="ec2_name" required>
+</div>
+<div class="row">
+<div class="field">
+<label class="required">Relationship / Parentesco</label>
+<select name="ec2_relationship" required>
+<option value="">Select / Seleccione</option>
+<option value="Spouse">Spouse / Esposa(o)</option>
+<option value="Parent">Parent / Padre/Madre</option>
+<option value="Sibling">Sibling / Hermano(a)</option>
+<option value="Child">Child / Hijo(a)</option>
+<option value="Friend">Friend / Amigo(a)</option>
+<option value="Other">Other / Otro</option>
+</select>
+</div>
+<div class="field">
+<label class="required">Cell Phone / Teléfono celular</label>
+<input type="tel" name="ec2_phone" required placeholder="(915) 555-1234">
+</div>
+</div>
+<div class="field">
+<label>Alternate Phone / Teléfono alterno</label>
+<input type="tel" name="ec2_phone_alt" placeholder="Optional / Opcional">
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">🏥 Medical Information / Información Médica</div>
+<div class="row">
+<div class="field">
+<label>Blood Type / Tipo de sangre</label>
+<select name="blood_type">
+<option value="Unknown">Unknown / No sé</option>
+<option value="A+">A+</option>
+<option value="A-">A-</option>
+<option value="B+">B+</option>
+<option value="B-">B-</option>
+<option value="AB+">AB+</option>
+<option value="AB-">AB-</option>
+<option value="O+">O+</option>
+<option value="O-">O-</option>
+</select>
+</div>
+</div>
+<div class="field">
+<label>Known Allergies / Alergias conocidas <span>(medications, food, insects / medicamentos, comida, insectos)</span></label>
+<textarea name="allergies" rows="2" placeholder="None / Ninguna"></textarea>
+</div>
+<div class="field">
+<label>Medical Conditions / Condiciones médicas <span>(diabetes, asthma, high blood pressure, epilepsy, heart condition)</span></label>
+<textarea name="medical_conditions" rows="2" placeholder="None / Ninguna"></textarea>
+</div>
+<div class="field">
+<label>Current Medications / Medicamentos actuales</label>
+<textarea name="medications" rows="2" placeholder="None / Ninguno"></textarea>
+</div>
+<div class="row">
+<div class="field">
+<label>Preferred Doctor or Clinic / Doctor o clínica</label>
+<input type="text" name="doctor" placeholder="Name / Nombre">
+</div>
+<div class="field">
+<label>Doctor Phone / Teléfono</label>
+<input type="tel" name="doctor_phone" placeholder="(915) 555-1234">
+</div>
+</div>
+<div class="row">
+<div class="field">
+<label>Health Insurance / Seguro médico</label>
+<select name="has_insurance">
+<option value="No">No</option>
+<option value="Yes">Yes / Sí</option>
+</select>
+</div>
+<div class="field">
+<label>Insurance Provider / Proveedor</label>
+<input type="text" name="insurance_provider" placeholder="Company name">
+</div>
+<div class="field">
+<label>Policy # / # de Póliza</label>
+<input type="text" name="policy_number" placeholder="Optional">
+</div>
+</div>
+</div>
+
+<div class="consent">
+<strong>Acknowledgment / Reconocimiento:</strong><br>
+I certify that the information provided is accurate. I authorize Del Bravo Erectors LLC to use this information in case of a medical emergency. I will notify the company of any changes.<br><br>
+<em>Certifico que la información proporcionada es correcta. Autorizo a Del Bravo Erectors LLC a usar esta información en caso de emergencia médica. Notificaré a la empresa de cualquier cambio.</em>
+</div>
+
+<div class="checkbox-group">
+<input type="checkbox" id="agree" name="agree" required>
+<label for="agree" class="required" style="font-size:14px">I agree / Estoy de acuerdo</label>
+</div>
+
+<br>
+<button type="submit" class="btn">SUBMIT / ENVIAR ✅</button>
+</form>
+</div>
+
+<div class="success" id="successMsg">
+<h2>✅ ¡Enviado!</h2>
+<p>Your emergency contact form has been submitted successfully.<br>Tu formulario fue enviado exitosamente.</p>
+<p style="margin-top:12px;font-size:13px;color:#888">Pedro Peña will receive your information.<br>You may close this page.</p>
+</div>
+
+<div class="footer">
+DEL BRAVO ERECTORS LLC | Confidential | 2026<br>
+"La seguridad empieza con estar preparados." 🏗️
+</div>
+</div>
+
+<script>
+document.getElementById('emergencyForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const fd = new FormData(this);
+  const data = {};
+  fd.forEach((v,k) => data[k] = v);
+  
+  // Send via mailto as fallback + formsubmit.co
+  const subject = encodeURIComponent('Emergency Contact Form - ' + data.full_name);
+  const body = encodeURIComponent(Object.entries(data).map(([k,v]) => k.replace(/_/g,' ').toUpperCase() + ': ' + v).join('\n'));
+  
+  // Try FormSubmit (free email service)
+  fetch('https://formsubmit.co/ajax/pedro@delbravosteel.com', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+    body: JSON.stringify({
+      ...data,
+      _subject: 'Emergency Contact Form - ' + data.full_name,
+      _template: 'table'
+    })
+  }).then(r => r.json()).then(d => {
+    document.getElementById('formBody').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  }).catch(err => {
+    // Fallback to mailto
+    window.location.href = 'mailto:pedro@delbravosteel.com?subject=' + subject + '&body=' + body;
+    document.getElementById('formBody').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  });
+});
+</script>
+</body>
+</html>
