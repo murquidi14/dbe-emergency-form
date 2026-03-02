@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Del Bravo Erectors — Time Clock</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a2744;line-height:1.5}
+.container{max-width:500px;margin:0 auto;padding:12px}
+.header{text-align:center;padding:20px 16px;background:linear-gradient(135deg,#1a2744 0%,#2c5282 100%);border-radius:12px 12px 0 0;color:#fff}
+.header h1{font-size:18px;font-weight:700;margin:4px 0}
+.header .sub{font-size:11px;color:#c8a451;letter-spacing:1px}
+.header .time{font-size:32px;font-weight:700;color:#c8a451;margin:8px 0 0}
+.header .date{font-size:13px;color:#ddd}
+.form-body{background:#fff;padding:20px;border-radius:0 0 12px 12px;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:600;color:#4a5568;margin-bottom:4px}
+.field select,.field input{width:100%;padding:12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:16px;color:#1a2744;background:#fafbfc}
+.field select:focus,.field input:focus{outline:none;border-color:#c8a451;background:#fff}
+.btn-group{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:16px;font-size:18px;font-weight:700;border:none;border-radius:10px;cursor:pointer;letter-spacing:.5px;transition:all .2s}
+.btn:active{transform:scale(.97)}
+.btn-in{background:linear-gradient(135deg,#38a169 0%,#2f855a 100%);color:#fff}
+.btn-out{background:linear-gradient(135deg,#e53e3e 0%,#c53030 100%);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.success{display:none;text-align:center;padding:30px 20px}
+.success h2{font-size:24px;margin-bottom:6px}
+.success p{color:#555;font-size:14px}
+.success .emoji{font-size:48px;margin-bottom:10px}
+.record{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:10px;font-size:12px;color:#555;text-align:center}
+.footer{text-align:center;padding:12px;font-size:10px;color:#999}
+.location-note{font-size:10px;color:#999;text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>🏗️ DEL BRAVO ERECTORS</h1>
+<div class="sub">TIME CLOCK — YARD</div>
+<div class="time" id="clock">--:--</div>
+<div class="date" id="dateDisplay">--</div>
+</div>
+
+<div class="form-body" id="formBody">
+<div class="field">
+<label>👤 Nombre / Name</label>
+<select id="employee" required>
+<option value="">Select / Seleccione</option>
+<option value="Rogelio Enriquez">Rogelio Enriquez</option>
+<option value="Tony Cisneros">Tony Cisneros</option>
+<option value="Saul Martinez">Saul Martinez</option>
+<option value="Angel Zavala">Angel Zavala</option>
+<option value="Jaime Rivas">Jaime Rivas</option>
+<option value="Xavier Medina">Xavier Medina</option>
+<option value="Anthony Maese">Anthony Maese</option>
+<option value="Oswaldo Romero">Oswaldo Romero</option>
+</select>
+</div>
+
+<div class="field">
+<label>📝 Notas / Notes <span style="font-weight:400;color:#999">(opcional)</span></label>
+<input type="text" id="notes" placeholder="e.g. picking up materials, truck inspection...">
+</div>
+
+<div class="btn-group">
+<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')">✅ SIGN IN</button>
+<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')">🔴 SIGN OUT</button>
+</div>
+
+<div class="location-note">📍 Tu ubicación será registrada automáticamente</div>
+</div>
+
+<div class="success" id="successMsg">
+<div class="emoji" id="successEmoji">✅</div>
+<h2 id="successTitle">Registrado!</h2>
+<p id="successDetail"></p>
+<div class="record" id="recordDetail"></div>
+<br>
+<button class="btn btn-in" onclick="resetForm()" style="background:#2c5282">🔄 Otro empleado</button>
+</div>
+
+<div class="footer">
+DEL BRAVO ERECTORS LLC | Time Clock | 2026<br>
+Pedro Peña — (915) 525-5530
+</div>
+</div>
+
+<script>
+// Live clock
+function updateClock(){
+  const now=new Date();
+  const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+  const ampm=h>=12?'PM':'AM';
+  const h12=h%12||12;
+  document.getElementById('clock').textContent=
+    h12.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0')+' '+ampm;
+  const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('dateDisplay').textContent=
+    days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' '+now.getFullYear();
+}
+updateClock();
+setInterval(updateClock,1000);
+
+let userLat='',userLon='',userAddr='';
+
+// Get location
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLat=pos.coords.latitude.toFixed(6);
+    userLon=pos.coords.longitude.toFixed(6);
+    userAddr=userLat+', '+userLon;
+  },err=>{
+    userAddr='Location unavailable';
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+function submitTime(action){
+  const emp=document.getElementById('employee').value;
+  if(!emp){alert('Selecciona tu nombre / Select your name');return;}
+  
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const dateStr=now.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const notes=document.getElementById('notes').value||'—';
+  
+  const data={
+    employee:emp,
+    action:action,
+    date:dateStr,
+    time:timeStr,
+    notes:notes,
+    location:userAddr||'N/A',
+    lat:userLat,
+    lon:userLon,
+    _subject:'⏰ '+action+' — '+emp+' — '+timeStr,
+    _template:'table'
+  };
+
+  // Disable buttons
+  document.getElementById('btnIn').disabled=true;
+  document.getElementById('btnOut').disabled=true;
+
+  // Send via FormSubmit
+  fetch('https://formsubmit.co/ajax/pedro@delbravosteel.com',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify(data)
+  }).then(r=>r.json()).then(d=>{
+    showSuccess(emp,action,timeStr,dateStr,notes);
+  }).catch(err=>{
+    // Fallback mailto
+    const subject=encodeURIComponent('⏰ '+action+' — '+emp+' — '+timeStr);
+    const body=encodeURIComponent(
+      'Employee: '+emp+'\nAction: '+action+'\nDate: '+dateStr+'\nTime: '+timeStr+'\nNotes: '+notes+'\nLocation: '+userAddr
+    );
+    window.location.href='mailto:pedro@delbravosteel.com?subject='+subject+'&body='+body;
+    showSuccess(emp,action,timeStr,dateStr,notes);
+  });
+}
+
+function showSuccess(emp,action,time,date,notes){
+  document.getElementById('formBody').style.display='none';
+  document.getElementById('successMsg').style.display='block';
+  
+  const isIn=action==='SIGN IN';
+  document.getElementById('successEmoji').textContent=isIn?'✅':'🔴';
+  document.getElementById('successTitle').textContent=isIn?'¡Entrada registrada!':'¡Salida registrada!';
+  document.getElementById('successTitle').style.color=isIn?'#38a169':'#e53e3e';
+  document.getElementById('successDetail').textContent=emp+' — '+time;
+  
+  let locLink='';
+  if(userLat&&userLon){
+    locLink='<br>📍 <a href="https://maps.google.com/?q='+userLat+','+userLon+'" target="_blank">Ver ubicación</a>';
+  }
+  document.getElementById('recordDetail').innerHTML=
+    '📅 '+date+' | ⏰ '+time+'<br>'+
+    '👤 '+emp+' | '+action+'<br>'+
+    '📝 '+(notes||'—')+locLink;
+}
+
+function resetForm(){
+  document.getElementById('formBody').style.display='block';
+  document.getElementById('successMsg').style.display='none';
+  document.getElementById('employee').value='';
+  document.getElementById('notes').value='';
+  document.getElementById('btnIn').disabled=false;
+  document.getElementById('btnOut').disabled=false;
+}
+</script>
+</body>
+</html>
