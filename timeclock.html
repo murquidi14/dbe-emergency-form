@@ -30,27 +30,17 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 .success .emoji{font-size:48px;margin-bottom:10px}
 .record{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:10px;font-size:12px;color:#555;text-align:center}
 .footer{text-align:center;padding:12px;font-size:10px;color:#999}
-/* PIN styles */
-.pin-section{text-align:center;margin:14px 0}
-.pin-title{font-size:14px;font-weight:700;color:#1a2744;margin-bottom:8px}
-.pin-dots{display:flex;justify-content:center;gap:10px;margin:10px 0}
-.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;background:#fff;transition:all .2s}
-.pin-dot.filled{background:#c8a451;border-color:#c8a451}
-.pin-pad{display:grid;grid-template-columns:repeat(3,70px);gap:8px;justify-content:center;margin:10px 0}
-.pin-key{padding:14px;font-size:22px;font-weight:700;border:1.5px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;color:#1a2744;transition:all .1s}
-.pin-key:active{background:#c8a451;color:#fff;border-color:#c8a451}
-.pin-key.del{font-size:14px;color:#e53e3e}
-.pin-error{color:#e53e3e;font-size:12px;font-weight:600;margin-top:6px;min-height:18px}
-/* Selfie styles */
 .selfie-section{text-align:center;margin:14px 0}
 .selfie-preview{width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #c8a451;margin:10px auto;display:none}
 .video-preview{width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #c8a451;margin:10px auto}
 .selfie-note{font-size:11px;color:#888;margin-top:4px}
 .hidden{display:none!important}
-/* Setup PIN screen */
-.setup-section{text-align:center;padding:20px 0}
-.setup-section h3{font-size:16px;color:#1a2744;margin-bottom:4px}
-.setup-section p{font-size:12px;color:#888}
+.welcome{text-align:center;padding:10px 0}
+.welcome .name{font-size:22px;font-weight:700;color:#1a2744}
+.welcome .badge{font-size:11px;color:#38a169;margin-top:2px}
+.device-locked{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;font-size:12px;color:#856404;text-align:center;margin:10px 0}
+.unlink{font-size:10px;color:#999;text-align:center;margin-top:6px}
+.unlink a{color:#e53e3e}
 </style>
 </head>
 <body>
@@ -64,11 +54,15 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 
 <div class="form-body" id="formBody">
 
-<!-- STEP 1: Select Name -->
-<div id="step1">
+<!-- REGISTER: First time on this device -->
+<div id="stepRegister" class="hidden">
+<div style="text-align:center;padding:10px 0">
+<div style="font-size:16px;font-weight:700;color:#1a2744">📱 Registra este teléfono</div>
+<div style="font-size:12px;color:#888">Este dispositivo quedará vinculado a tu nombre<br>Register this phone to your name</div>
+</div>
 <div class="field">
 <label>👤 Nombre / Name</label>
-<select id="employee" required onchange="onEmployeeSelect()">
+<select id="employeeReg" required>
 <option value="">Select / Seleccione</option>
 <option value="Rogelio Enriquez">Rogelio Enriquez</option>
 <option value="Tony Cisneros">Tony Cisneros</option>
@@ -80,67 +74,74 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 <option value="Oswaldo Romero">Oswaldo Romero</option>
 </select>
 </div>
-<div class="location-note" id="geoStatus" style="font-size:12px;font-weight:600;padding:8px;border-radius:6px;background:#f7fafc;margin-top:10px">📍 Obteniendo ubicación... / Getting location...</div>
+<button class="btn btn-in" onclick="registerDevice()" style="margin-top:10px">🔗 VINCULAR TELÉFONO</button>
+<div class="location-note" id="geoStatusReg" style="font-size:12px;font-weight:600;padding:8px;border-radius:6px;background:#f7fafc;margin-top:10px">📍 Obteniendo ubicación...</div>
 </div>
 
-<!-- STEP 2: PIN Setup (first time only) -->
-<div id="stepSetup" class="hidden">
-<div class="setup-section">
-<h3>🔐 Crea tu PIN / Create your PIN</h3>
-<p>4 dígitos — no lo compartas / 4 digits — don't share it</p>
+<!-- MAIN: Returning user (device linked) -->
+<div id="stepMain" class="hidden">
+<div class="welcome">
+<div style="font-size:13px;color:#888">Bienvenido / Welcome</div>
+<div class="name" id="welcomeName"></div>
+<div class="badge">📱 Dispositivo vinculado ✅</div>
 </div>
-<div class="pin-section">
-<div class="pin-title" id="setupTitle">Ingresa PIN nuevo / Enter new PIN</div>
-<div class="pin-dots" id="setupDots">
-<div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-</div>
-<div class="pin-pad" id="setupPad"></div>
-<div class="pin-error" id="setupError"></div>
-</div>
-</div>
+<div class="location-note" id="geoStatusMain" style="font-size:12px;font-weight:600;padding:8px;border-radius:6px;background:#f7fafc;margin:10px 0">📍 Obteniendo ubicación...</div>
 
-<!-- STEP 3: Enter PIN -->
-<div id="stepPin" class="hidden">
-<div class="pin-section">
-<div class="pin-title">🔐 Ingresa tu PIN / Enter your PIN</div>
-<div class="pin-dots" id="pinDots">
-<div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-</div>
-<div class="pin-pad" id="pinPad"></div>
-<div class="pin-error" id="pinError"></div>
-<div style="margin-top:8px"><a href="#" onclick="resetPin();return false" style="font-size:11px;color:#888">¿Olvidaste tu PIN? / Forgot PIN?</a></div>
-</div>
-</div>
-
-<!-- STEP 4: Selfie -->
-<div id="stepSelfie" class="hidden">
+<!-- Selfie inline -->
 <div class="selfie-section">
-<div class="pin-title">📸 Tómate una selfie / Take a selfie</div>
+<div style="font-size:13px;font-weight:600;color:#4a5568;margin-bottom:4px">📸 Selfie</div>
 <video id="video" class="video-preview" autoplay playsinline></video>
 <img id="selfiePreview" class="selfie-preview">
 <canvas id="canvas" class="hidden"></canvas>
 <br>
-<button class="btn btn-in" id="btnCapture" onclick="captureSelfie()" style="max-width:200px;margin:8px auto;font-size:14px;padding:12px">📸 TOMAR FOTO</button>
-<button class="btn btn-in hidden" id="btnRetake" onclick="retakeSelfie()" style="max-width:200px;margin:8px auto;font-size:14px;padding:12px;background:#718096">🔄 OTRA VEZ</button>
+<button class="btn btn-in" id="btnCapture" onclick="captureSelfie()" style="max-width:200px;margin:8px auto;font-size:14px;padding:10px">📸 TOMAR FOTO</button>
+<button class="btn btn-in hidden" id="btnRetake" onclick="retakeSelfie()" style="max-width:200px;margin:8px auto;font-size:14px;padding:10px;background:#718096">🔄 OTRA VEZ</button>
 <div class="selfie-note">La foto se envía a Pedro para verificación</div>
 </div>
-</div>
 
-<!-- STEP 5: Clock In/Out -->
-<div id="stepAction" class="hidden">
-<div style="text-align:center;margin-bottom:10px">
-<img id="selfieThumb" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #c8a451">
-<div style="font-weight:700;font-size:15px;margin-top:4px" id="empConfirm"></div>
-<div style="font-size:11px;color:#38a169">✅ PIN verificado · 📸 Selfie tomada · 📍 En la yarda</div>
-</div>
 <div class="field">
 <label>📝 Notas / Notes <span style="font-weight:400;color:#999">(opcional)</span></label>
 <input type="text" id="notes" placeholder="e.g. picking up materials, truck inspection...">
 </div>
 <div class="btn-group">
-<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')">✅ SIGN IN</button>
-<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')">🔴 SIGN OUT</button>
+<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')" disabled>✅ SIGN IN</button>
+<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')" disabled>🔴 SIGN OUT</button>
 </div>
+<div class="unlink"><a href="#" onclick="unlinkDevice();return false">⚠️ ¿No eres tú? Desvincular teléfono</a></div>
+</div>
+
+<!-- TONY: Register another employee -->
+<div id="stepTony" class="hidden">
+<div style="text-align:center;padding:10px 0">
+<div style="font-size:16px;font-weight:700;color:#1a2744">👷 Registrar a otro empleado</div>
+<div style="font-size:12px;color:#888">Solo Tony Cisneros puede hacer esto</div>
+</div>
+<div class="field">
+<label>👤 Empleado / Employee</label>
+<select id="tonyEmp">
+<option value="">Select / Seleccione</option>
+<option value="Rogelio Enriquez">Rogelio Enriquez</option>
+<option value="Saul Martinez">Saul Martinez</option>
+<option value="Angel Zavala">Angel Zavala</option>
+<option value="Jaime Rivas">Jaime Rivas</option>
+<option value="Xavier Medina">Xavier Medina</option>
+<option value="Anthony Maese">Anthony Maese</option>
+<option value="Oswaldo Romero">Oswaldo Romero</option>
+</select>
+</div>
+<div class="selfie-section">
+<video id="videoTony" class="video-preview" autoplay playsinline></video>
+<img id="selfiePreviewTony" class="selfie-preview">
+<canvas id="canvasTony" class="hidden"></canvas>
+<button class="btn btn-in" id="btnCaptureTony" onclick="captureSelfie('Tony')" style="max-width:200px;margin:8px auto;font-size:14px;padding:10px">📸 FOTO DEL EMPLEADO</button>
+<button class="btn btn-in hidden" id="btnRetakeTony" onclick="retakeSelfie('Tony')" style="max-width:200px;margin:8px auto;font-size:14px;padding:10px;background:#718096">🔄 OTRA VEZ</button>
+</div>
+<div class="btn-group">
+<button class="btn btn-in" id="btnInTony" onclick="submitTimeTony('SIGN IN')" disabled>✅ SIGN IN</button>
+<button class="btn btn-out" id="btnOutTony" onclick="submitTimeTony('SIGN OUT')" disabled>🔴 SIGN OUT</button>
+</div>
+<br>
+<button class="btn" onclick="showStep('stepMain');stopCamera();initMainView()" style="background:#718096;font-size:14px;padding:10px">← Volver</button>
 </div>
 
 </div>
@@ -152,7 +153,7 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 <p id="successDetail"></p>
 <div class="record" id="recordDetail"></div>
 <br>
-<button class="btn btn-in" onclick="fullReset()" style="background:#2c5282">🔄 Otro empleado</button>
+<button class="btn btn-in" onclick="fullReset()" style="background:#2c5282">✅ OK</button>
 </div>
 
 <div class="footer">
@@ -166,314 +167,233 @@ Pedro Peña — (915) 525-5530
 function updateClock(){
   const now=new Date();
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-  const ampm=h>=12?'PM':'AM';
-  const h12=h%12||12;
+  const ampm=h>=12?'PM':'AM';const h12=h%12||12;
   document.getElementById('clock').textContent=h12.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0')+' '+ampm;
   const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('dateDisplay').textContent=days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' '+now.getFullYear();
 }
-updateClock();
-setInterval(updateClock,1000);
+updateClock();setInterval(updateClock,1000);
 
 // ===== GEOFENCE =====
 let userLat='',userLon='',userAddr='';
 let locationReady=false,withinGeofence=false,distanceFromYard=null;
-// GEOFENCE ZONES — multiple job sites
 const ZONES=[
   {name:'Yarda',lat:31.812964,lon:-106.223598,radiusFt:100},
   {name:'Cotton Exchange',lat:31.835375,lon:-106.575469,radiusFt:100},
   {name:'Montecillo',lat:31.812151,lon:-106.526253,radiusFt:130},
   {name:'Alameda Warehouse',lat:31.705103,lon:-106.341878,radiusFt:150},
 ];
-
 let closestZone=null;
 
-function haversineM(lat1,lon1,lat2,lon2){
-  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
+function haversineM(a,b,c,d){const R=6371000,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180;const s=Math.sin(x/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)**2;return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));}
 
 function checkGeofence(lat,lon){
   let best=null,bestDist=Infinity;
-  for(const z of ZONES){
-    const d=haversineM(lat,lon,z.lat,z.lon);
-    const rM=z.radiusFt*0.3048;
-    if(d<=rM) return {zone:z,dist:d,inside:true};
-    if(d<bestDist){bestDist=d;best=z;}
-  }
-  return {zone:best,dist:bestDist,inside:false};
+  for(const z of ZONES){const d=haversineM(lat,lon,z.lat,z.lon);if(d<=z.radiusFt*0.3048)return{zone:z,dist:d,inside:true};if(d<bestDist){bestDist=d;best=z;}}
+  return{zone:best,dist:bestDist,inside:false};
 }
 
-function updateGeofenceUI(){
-  const el=document.getElementById('geoStatus');
-  if(!locationReady){el.innerHTML='📍 Obteniendo ubicación... / Getting location...';el.style.color='#c8a451';return;}
+function updateGeoUI(elId){
+  const el=document.getElementById(elId);if(!el)return;
+  if(!locationReady){el.innerHTML='📍 Obteniendo ubicación...';el.style.color='#c8a451';return;}
   if(withinGeofence){
-    const distFt=Math.round(distanceFromYard/0.3048);
-    el.innerHTML='✅ Ubicación verificada — <b>'+closestZone.name+'</b> ('+distFt+' ft)';el.style.color='#38a169';
+    const ft=Math.round(distanceFromYard/0.3048);
+    el.innerHTML='✅ <b>'+closestZone.name+'</b> ('+ft+' ft)';el.style.color='#38a169';
     document.getElementById('siteLabel').textContent='TIME CLOCK — '+closestZone.name.toUpperCase();
   }else{
-    const distFt=Math.round(distanceFromYard/0.3048);
-    el.innerHTML='🚫 FUERA DEL ÁREA — '+distFt+' ft de '+closestZone.name+' (máx '+closestZone.radiusFt+' ft)<br><span style="font-size:10px">No puedes registrar desde esta ubicación</span>';el.style.color='#e53e3e';
+    const ft=Math.round(distanceFromYard/0.3048);
+    el.innerHTML='🚫 FUERA DEL ÁREA — '+ft+' ft de '+closestZone.name+'<br><span style="font-size:10px">No puedes registrar desde aquí</span>';el.style.color='#e53e3e';
   }
 }
 
 if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(pos=>{
-    userLat=pos.coords.latitude.toFixed(6);userLon=pos.coords.longitude.toFixed(6);userAddr=userLat+', '+userLon;
-    const result=checkGeofence(pos.coords.latitude,pos.coords.longitude);
-    closestZone=result.zone;distanceFromYard=result.dist;withinGeofence=result.inside;
-    locationReady=true;updateGeofenceUI();
+    userLat=pos.coords.latitude.toFixed(6);userLon=pos.coords.longitude.toFixed(6);userAddr=userLat+','+userLon;
+    const r=checkGeofence(pos.coords.latitude,pos.coords.longitude);
+    closestZone=r.zone;distanceFromYard=r.dist;withinGeofence=r.inside;locationReady=true;
+    updateGeoUI('geoStatusReg');updateGeoUI('geoStatusMain');
+    if(withinGeofence&&selfieReady){document.getElementById('btnIn').disabled=false;document.getElementById('btnOut').disabled=false;}
   },err=>{
-    userAddr='Location unavailable';locationReady=true;distanceFromYard=99999;withinGeofence=false;
-    closestZone={name:'N/A',radiusFt:0};
-    const el=document.getElementById('geoStatus');
-    el.innerHTML='⚠️ No se pudo obtener ubicación — Activa tu GPS';el.style.color='#e53e3e';
+    userAddr='N/A';locationReady=true;distanceFromYard=99999;withinGeofence=false;closestZone={name:'N/A',radiusFt:0};
+    ['geoStatusReg','geoStatusMain'].forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='⚠️ Activa tu GPS / Enable location';el.style.color='#e53e3e';}});
   },{enableHighAccuracy:true,timeout:15000});
 }
-updateGeofenceUI();
 
-// ===== PIN SYSTEM =====
+// ===== DEVICE BINDING =====
+const DEVICE_KEY='dbe_device_employee';
 let currentEmployee='';
-let pinBuffer='';
-let setupPhase=0; // 0=first entry, 1=confirm
-let setupFirstPin='';
-let selfieDataUrl='';
+let selfieDataUrl='',selfieDataUrlTony='';
+let selfieReady=false;
 let videoStream=null;
 
-function getPinKey(emp){return 'dbe_pin_'+emp.replace(/\s/g,'_').toLowerCase();}
+function getLinkedEmployee(){return localStorage.getItem(DEVICE_KEY);}
 
-function onEmployeeSelect(){
-  const emp=document.getElementById('employee').value;
-  if(!emp)return;
-  if(!locationReady){alert('Espera a que se obtenga tu ubicación / Wait for location');document.getElementById('employee').value='';return;}
-  if(!withinGeofence){alert('🚫 No estás en la yarda / You are not at the yard');document.getElementById('employee').value='';return;}
+function registerDevice(){
+  const emp=document.getElementById('employeeReg').value;
+  if(!emp){alert('Selecciona tu nombre');return;}
+  if(!locationReady){alert('Espera por tu ubicación');return;}
+  if(!withinGeofence){alert('🚫 Debes estar en un área autorizada para registrarte');return;}
+  localStorage.setItem(DEVICE_KEY,emp);
   currentEmployee=emp;
-  const stored=localStorage.getItem(getPinKey(emp));
-  if(!stored){
-    showStep('stepSetup');setupPhase=0;setupFirstPin='';pinBuffer='';
-    buildPad('setupPad','setupDots','setupError',handleSetupKey);
-    document.getElementById('setupTitle').textContent='Crea tu PIN (4 dígitos) / Create PIN';
+  alert('✅ Teléfono vinculado a: '+emp+'\n\nEste celular ahora es tuyo para clock in/out.');
+  initMainView();
+}
+
+function unlinkDevice(){
+  const emp=getLinkedEmployee()||'este dispositivo';
+  if(confirm('⚠️ ¿Desvincular '+emp+' de este teléfono?\n\nTendrás que registrarte de nuevo.')){
+    localStorage.removeItem(DEVICE_KEY);
+    location.reload();
+  }
+}
+
+// ===== INIT =====
+function init(){
+  const linked=getLinkedEmployee();
+  if(linked){
+    currentEmployee=linked;
+    initMainView();
   }else{
-    showStep('stepPin');pinBuffer='';
-    buildPad('pinPad','pinDots','pinError',handlePinKey);
+    showStep('stepRegister');
+  }
+}
+
+function initMainView(){
+  currentEmployee=getLinkedEmployee();
+  showStep('stepMain');
+  document.getElementById('welcomeName').textContent=currentEmployee;
+  selfieReady=false;selfieDataUrl='';
+  document.getElementById('selfiePreview').style.display='none';
+  document.getElementById('video').style.display='block';
+  document.getElementById('btnCapture').classList.remove('hidden');
+  document.getElementById('btnRetake').classList.add('hidden');
+  document.getElementById('btnIn').disabled=true;
+  document.getElementById('btnOut').disabled=true;
+  updateGeoUI('geoStatusMain');
+  startCamera('main');
+
+  // Show Tony's "register other" button if Tony
+  if(currentEmployee==='Tony Cisneros'){
+    if(!document.getElementById('btnTonyMode')){
+      const b=document.createElement('button');b.id='btnTonyMode';b.className='btn';
+      b.style.cssText='background:#2c5282;font-size:13px;padding:10px;margin-top:8px';
+      b.textContent='👷 Registrar a otro empleado (sin celular)';
+      b.onclick=()=>{stopCamera();showStep('stepTony');startCamera('Tony');};
+      document.getElementById('stepMain').appendChild(b);
+    }
   }
 }
 
 function showStep(id){
-  ['step1','stepSetup','stepPin','stepSelfie','stepAction'].forEach(s=>{
-    document.getElementById(s).classList.toggle('hidden',s!==id&&s!=='step1');
-  });
-  if(id!=='step1')document.getElementById('step1').classList.add('hidden');
-}
-
-function buildPad(padId,dotsId,errId,handler){
-  const pad=document.getElementById(padId);
-  pad.innerHTML='';
-  const keys=['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  keys.forEach(k=>{
-    if(k===''){pad.innerHTML+='<div></div>';return;}
-    const btn=document.createElement('button');
-    btn.className='pin-key'+(k==='⌫'?' del':'');
-    btn.textContent=k;
-    btn.onclick=()=>handler(k,dotsId,errId);
-    pad.appendChild(btn);
-  });
-  updateDots(dotsId);
-}
-
-function updateDots(dotsId){
-  const dots=document.getElementById(dotsId).children;
-  for(let i=0;i<4;i++){dots[i].classList.toggle('filled',i<pinBuffer.length);}
-}
-
-function handleSetupKey(key,dotsId,errId){
-  document.getElementById(errId).textContent='';
-  if(key==='⌫'){pinBuffer=pinBuffer.slice(0,-1);updateDots(dotsId);return;}
-  if(pinBuffer.length>=4)return;
-  pinBuffer+=key;updateDots(dotsId);
-  if(pinBuffer.length===4){
-    if(setupPhase===0){
-      setupFirstPin=pinBuffer;pinBuffer='';setupPhase=1;
-      document.getElementById('setupTitle').textContent='Confirma tu PIN / Confirm PIN';
-      updateDots(dotsId);
-    }else{
-      if(pinBuffer===setupFirstPin){
-        localStorage.setItem(getPinKey(currentEmployee),pinBuffer);
-        document.getElementById(errId).style.color='#38a169';
-        document.getElementById(errId).textContent='✅ PIN guardado!';
-        setTimeout(()=>goToSelfie(),600);
-      }else{
-        document.getElementById(errId).textContent='❌ No coincide — intenta de nuevo';
-        pinBuffer='';setupPhase=0;setupFirstPin='';
-        document.getElementById('setupTitle').textContent='Crea tu PIN (4 dígitos) / Create PIN';
-        setTimeout(()=>updateDots(dotsId),200);
-      }
-    }
-  }
-}
-
-function handlePinKey(key,dotsId,errId){
-  document.getElementById(errId).textContent='';
-  if(key==='⌫'){pinBuffer=pinBuffer.slice(0,-1);updateDots(dotsId);return;}
-  if(pinBuffer.length>=4)return;
-  pinBuffer+=key;updateDots(dotsId);
-  if(pinBuffer.length===4){
-    const stored=localStorage.getItem(getPinKey(currentEmployee));
-    if(pinBuffer===stored){
-      document.getElementById(errId).style.color='#38a169';
-      document.getElementById(errId).textContent='✅ PIN correcto!';
-      setTimeout(()=>goToSelfie(),500);
-    }else{
-      document.getElementById(errId).style.color='#e53e3e';
-      document.getElementById(errId).textContent='❌ PIN incorrecto — intenta de nuevo';
-      pinBuffer='';
-      setTimeout(()=>updateDots(dotsId),300);
-    }
-  }
-}
-
-function resetPin(){
-  if(confirm('¿Borrar PIN de '+currentEmployee+'? Tendrás que crear uno nuevo.\n\nDelete PIN for '+currentEmployee+'?')){
-    localStorage.removeItem(getPinKey(currentEmployee));
-    showStep('stepSetup');setupPhase=0;setupFirstPin='';pinBuffer='';
-    buildPad('setupPad','setupDots','setupError',handleSetupKey);
-    document.getElementById('setupTitle').textContent='Crea tu PIN (4 dígitos) / Create PIN';
-  }
+  ['stepRegister','stepMain','stepTony'].forEach(s=>document.getElementById(s).classList.toggle('hidden',s!==id));
 }
 
 // ===== SELFIE =====
-function goToSelfie(){
-  showStep('stepSelfie');
-  document.getElementById('selfiePreview').style.display='none';
-  document.getElementById('video').style.display='block';
-  document.getElementById('btnCapture').classList.remove('hidden');
-  document.getElementById('btnRetake').classList.add('hidden');
-  startCamera();
-}
-
-function startCamera(){
+function startCamera(mode){
+  const vid=mode==='Tony'?document.getElementById('videoTony'):document.getElementById('video');
   navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:400},height:{ideal:400}}})
-  .then(stream=>{videoStream=stream;document.getElementById('video').srcObject=stream;})
-  .catch(err=>{alert('⚠️ No se pudo abrir la cámara. Permite acceso a la cámara.\nCould not open camera. Allow camera access.');});
+  .then(s=>{videoStream=s;vid.srcObject=s;})
+  .catch(()=>alert('⚠️ Permite acceso a la cámara'));
 }
-
-function captureSelfie(){
-  const video=document.getElementById('video');
-  const canvas=document.getElementById('canvas');
-  canvas.width=400;canvas.height=400;
-  const ctx=canvas.getContext('2d');
-  const size=Math.min(video.videoWidth,video.videoHeight);
-  const sx=(video.videoWidth-size)/2,sy=(video.videoHeight-size)/2;
-  ctx.drawImage(video,sx,sy,size,size,0,0,400,400);
-  selfieDataUrl=canvas.toDataURL('image/jpeg',0.7);
-  document.getElementById('selfiePreview').src=selfieDataUrl;
-  document.getElementById('selfiePreview').style.display='block';
-  document.getElementById('video').style.display='none';
-  document.getElementById('btnCapture').classList.add('hidden');
-  document.getElementById('btnRetake').classList.remove('hidden');
-  stopCamera();
-  // Auto-proceed after brief preview
-  setTimeout(()=>goToAction(),800);
-}
-
-function retakeSelfie(){
-  document.getElementById('selfiePreview').style.display='none';
-  document.getElementById('video').style.display='block';
-  document.getElementById('btnCapture').classList.remove('hidden');
-  document.getElementById('btnRetake').classList.add('hidden');
-  selfieDataUrl='';
-  startCamera();
-}
-
 function stopCamera(){if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}}
 
-function goToAction(){
-  showStep('stepAction');
-  document.getElementById('selfieThumb').src=selfieDataUrl;
-  document.getElementById('empConfirm').textContent=currentEmployee;
+function captureSelfie(mode){
+  const isT=mode==='Tony';
+  const vid=document.getElementById(isT?'videoTony':'video');
+  const cvs=document.getElementById(isT?'canvasTony':'canvas');
+  cvs.width=400;cvs.height=400;
+  const ctx=cvs.getContext('2d');
+  const sz=Math.min(vid.videoWidth,vid.videoHeight);
+  ctx.drawImage(vid,(vid.videoWidth-sz)/2,(vid.videoHeight-sz)/2,sz,sz,0,0,400,400);
+  const dataUrl=cvs.toDataURL('image/jpeg',0.7);
+  const prev=document.getElementById(isT?'selfiePreviewTony':'selfiePreview');
+  prev.src=dataUrl;prev.style.display='block';
+  vid.style.display='none';
+  document.getElementById(isT?'btnCaptureTony':'btnCapture').classList.add('hidden');
+  document.getElementById(isT?'btnRetakeTony':'btnRetake').classList.remove('hidden');
+  stopCamera();
+  if(isT){selfieDataUrlTony=dataUrl;document.getElementById('btnInTony').disabled=!withinGeofence;document.getElementById('btnOutTony').disabled=!withinGeofence;}
+  else{selfieDataUrl=dataUrl;selfieReady=true;if(withinGeofence){document.getElementById('btnIn').disabled=false;document.getElementById('btnOut').disabled=false;}}
+}
+
+function retakeSelfie(mode){
+  const isT=mode==='Tony';
+  document.getElementById(isT?'selfiePreviewTony':'selfiePreview').style.display='none';
+  document.getElementById(isT?'videoTony':'video').style.display='block';
+  document.getElementById(isT?'btnCaptureTony':'btnCapture').classList.remove('hidden');
+  document.getElementById(isT?'btnRetakeTony':'btnRetake').classList.add('hidden');
+  if(isT){selfieDataUrlTony='';document.getElementById('btnInTony').disabled=true;document.getElementById('btnOutTony').disabled=true;}
+  else{selfieDataUrl='';selfieReady=false;document.getElementById('btnIn').disabled=true;document.getElementById('btnOut').disabled=true;}
+  startCamera(isT?'Tony':'main');
 }
 
 // ===== SUBMIT =====
-function submitTime(action){
+function doSubmit(emp,action,selfie){
   const now=new Date();
   const timeStr=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const dateStr=now.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
-  const notes=document.getElementById('notes').value||'—';
+  const notes=document.getElementById('notes')?document.getElementById('notes').value:'—';
   const distFt=distanceFromYard?Math.round(distanceFromYard/0.3048):'N/A';
+  const registeredBy=emp!==currentEmployee?currentEmployee:'self';
 
   const data={
-    employee:currentEmployee,
-    action:action,
-    date:dateStr,
-    time:timeStr,
-    notes:notes,
-    location:userAddr||'N/A',
-    lat:userLat,lon:userLon,
-    distance:distFt+' ft',
-    within_geofence:withinGeofence?'YES':'NO',
+    employee:emp,action:action,date:dateStr,time:timeStr,notes:notes||'—',
+    location:userAddr||'N/A',lat:userLat,lon:userLon,
+    distance:distFt+' ft',within_geofence:withinGeofence?'YES':'NO',
     job_site:closestZone?closestZone.name:'N/A',
-    selfie:'(see attached image)',
-    pin_verified:'YES',
-    _subject:'⏰ '+action+' — '+currentEmployee+' — '+timeStr+' ('+distFt+'ft)',
+    device_linked:'YES',registered_by:registeredBy,
+    _subject:'⏰ '+action+' — '+emp+' — '+timeStr+' @ '+(closestZone?closestZone.name:''),
     _template:'table'
   };
 
-  document.getElementById('btnIn').disabled=true;
-  document.getElementById('btnOut').disabled=true;
-
-  // Send form data + selfie
   const formData=new FormData();
   Object.keys(data).forEach(k=>formData.append(k,data[k]));
-  // Convert selfie to blob and attach
-  if(selfieDataUrl){
-    const byteString=atob(selfieDataUrl.split(',')[1]);
-    const ab=new ArrayBuffer(byteString.length);
-    const ia=new Uint8Array(ab);
-    for(let i=0;i<byteString.length;i++)ia[i]=byteString.charCodeAt(i);
-    const blob=new Blob([ab],{type:'image/jpeg'});
-    formData.append('attachment',blob,currentEmployee.replace(/\s/g,'-')+'-'+action.replace(/\s/g,'')+'-'+dateStr.replace(/\//g,'')+'.jpg');
+  if(selfie){
+    const bs=atob(selfie.split(',')[1]);const ab=new ArrayBuffer(bs.length);const ia=new Uint8Array(ab);
+    for(let i=0;i<bs.length;i++)ia[i]=bs.charCodeAt(i);
+    formData.append('attachment',new Blob([ab],{type:'image/jpeg'}),emp.replace(/\s/g,'-')+'-'+action.replace(/\s/g,'')+'.jpg');
   }
 
-  fetch('https://formsubmit.co/ajax/pedro@delbravosteel.com',{
-    method:'POST',
-    headers:{'Accept':'application/json'},
-    body:formData
-  }).then(r=>r.json()).then(d=>{
-    showSuccessScreen(action,timeStr,dateStr,notes);
-  }).catch(err=>{
-    // Still show success — data captured locally
-    showSuccessScreen(action,timeStr,dateStr,notes);
-  });
+  fetch('https://formsubmit.co/ajax/pedro@delbravosteel.com',{method:'POST',headers:{'Accept':'application/json'},body:formData})
+  .then(r=>r.json()).then(()=>showSuccess(emp,action,timeStr,dateStr))
+  .catch(()=>showSuccess(emp,action,timeStr,dateStr));
 }
 
-function showSuccessScreen(action,time,date,notes){
+function submitTime(action){
+  document.getElementById('btnIn').disabled=true;document.getElementById('btnOut').disabled=true;
+  doSubmit(currentEmployee,action,selfieDataUrl);
+}
+
+function submitTimeTony(action){
+  const emp=document.getElementById('tonyEmp').value;
+  if(!emp){alert('Selecciona al empleado');return;}
+  if(!selfieDataUrlTony){alert('Toma la foto primero');return;}
+  document.getElementById('btnInTony').disabled=true;document.getElementById('btnOutTony').disabled=true;
+  doSubmit(emp,action,selfieDataUrlTony);
+}
+
+function showSuccess(emp,action,time,date){
   document.getElementById('formBody').style.display='none';
   document.getElementById('successMsg').style.display='block';
   const isIn=action==='SIGN IN';
   document.getElementById('successEmoji').textContent=isIn?'✅':'🔴';
   document.getElementById('successTitle').textContent=isIn?'¡Entrada registrada!':'¡Salida registrada!';
   document.getElementById('successTitle').style.color=isIn?'#38a169':'#e53e3e';
-  document.getElementById('successDetail').textContent=currentEmployee+' — '+time;
-  let locLink='';
-  if(userLat&&userLon)locLink='<br>📍 <a href="https://maps.google.com/?q='+userLat+','+userLon+'" target="_blank">Ver ubicación</a>';
-  document.getElementById('recordDetail').innerHTML='📅 '+date+' | ⏰ '+time+'<br>👤 '+currentEmployee+' | '+action+'<br>📝 '+(notes||'—')+'<br>🔐 PIN ✅ | 📸 Selfie ✅ | 📍 Geofence ✅'+locLink;
+  document.getElementById('successDetail').textContent=emp+' — '+time;
+  document.getElementById('recordDetail').innerHTML='📅 '+date+' | ⏰ '+time+'<br>👤 '+emp+' | '+action+'<br>📍 '+(closestZone?closestZone.name:'')+'<br>📱 Device ✅ | 📸 Selfie ✅ | 📍 Geofence ✅';
 }
 
 function fullReset(){
   document.getElementById('formBody').style.display='block';
   document.getElementById('successMsg').style.display='none';
-  document.getElementById('employee').value='';
-  document.getElementById('notes').value='';
-  currentEmployee='';pinBuffer='';selfieDataUrl='';setupPhase=0;setupFirstPin='';
-  document.getElementById('btnIn').disabled=false;
-  document.getElementById('btnOut').disabled=false;
-  showStep('step1');
-  document.getElementById('step1').classList.remove('hidden');
-  stopCamera();
-  if(locationReady)updateGeofenceUI();
+  if(document.getElementById('notes'))document.getElementById('notes').value='';
+  selfieDataUrl='';selfieDataUrlTony='';selfieReady=false;
+  stopCamera();initMainView();
 }
+
+// ===== START =====
+init();
 </script>
 </body>
 </html>
