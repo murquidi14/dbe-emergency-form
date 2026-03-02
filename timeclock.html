@@ -371,8 +371,8 @@ function checkSchedule(emp){
 }
 
 function submitTime(action){
-  if(action==='SIGN IN'&&!checkSchedule(currentEmployee)){
-    alert('⚠️ Sign in no disponible antes de las 6:00 AM\nSign in not available before 6:00 AM');return;
+  if(!checkSchedule(currentEmployee)){
+    alert('⚠️ No disponible antes de las 6:00 AM\nNot available before 6:00 AM');return;
   }
   document.getElementById('btnIn').disabled=true;document.getElementById('btnOut').disabled=true;
   doSubmit(currentEmployee,action,selfieDataUrl);
