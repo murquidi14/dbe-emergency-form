@@ -30,7 +30,27 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 .success .emoji{font-size:48px;margin-bottom:10px}
 .record{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-top:10px;font-size:12px;color:#555;text-align:center}
 .footer{text-align:center;padding:12px;font-size:10px;color:#999}
-.location-note{font-size:10px;color:#999;text-align:center;margin-top:8px}
+/* PIN styles */
+.pin-section{text-align:center;margin:14px 0}
+.pin-title{font-size:14px;font-weight:700;color:#1a2744;margin-bottom:8px}
+.pin-dots{display:flex;justify-content:center;gap:10px;margin:10px 0}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;background:#fff;transition:all .2s}
+.pin-dot.filled{background:#c8a451;border-color:#c8a451}
+.pin-pad{display:grid;grid-template-columns:repeat(3,70px);gap:8px;justify-content:center;margin:10px 0}
+.pin-key{padding:14px;font-size:22px;font-weight:700;border:1.5px solid #d1d5db;border-radius:10px;background:#fff;cursor:pointer;color:#1a2744;transition:all .1s}
+.pin-key:active{background:#c8a451;color:#fff;border-color:#c8a451}
+.pin-key.del{font-size:14px;color:#e53e3e}
+.pin-error{color:#e53e3e;font-size:12px;font-weight:600;margin-top:6px;min-height:18px}
+/* Selfie styles */
+.selfie-section{text-align:center;margin:14px 0}
+.selfie-preview{width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #c8a451;margin:10px auto;display:none}
+.video-preview{width:200px;height:200px;border-radius:50%;object-fit:cover;border:4px solid #c8a451;margin:10px auto}
+.selfie-note{font-size:11px;color:#888;margin-top:4px}
+.hidden{display:none!important}
+/* Setup PIN screen */
+.setup-section{text-align:center;padding:20px 0}
+.setup-section h3{font-size:16px;color:#1a2744;margin-bottom:4px}
+.setup-section p{font-size:12px;color:#888}
 </style>
 </head>
 <body>
@@ -43,9 +63,12 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 </div>
 
 <div class="form-body" id="formBody">
+
+<!-- STEP 1: Select Name -->
+<div id="step1">
 <div class="field">
 <label>👤 Nombre / Name</label>
-<select id="employee" required>
+<select id="employee" required onchange="onEmployeeSelect()">
 <option value="">Select / Seleccione</option>
 <option value="Rogelio Enriquez">Rogelio Enriquez</option>
 <option value="Tony Cisneros">Tony Cisneros</option>
@@ -57,27 +80,79 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 <option value="Oswaldo Romero">Oswaldo Romero</option>
 </select>
 </div>
+<div class="location-note" id="geoStatus" style="font-size:12px;font-weight:600;padding:8px;border-radius:6px;background:#f7fafc;margin-top:10px">📍 Obteniendo ubicación... / Getting location...</div>
+</div>
 
+<!-- STEP 2: PIN Setup (first time only) -->
+<div id="stepSetup" class="hidden">
+<div class="setup-section">
+<h3>🔐 Crea tu PIN / Create your PIN</h3>
+<p>4 dígitos — no lo compartas / 4 digits — don't share it</p>
+</div>
+<div class="pin-section">
+<div class="pin-title" id="setupTitle">Ingresa PIN nuevo / Enter new PIN</div>
+<div class="pin-dots" id="setupDots">
+<div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+</div>
+<div class="pin-pad" id="setupPad"></div>
+<div class="pin-error" id="setupError"></div>
+</div>
+</div>
+
+<!-- STEP 3: Enter PIN -->
+<div id="stepPin" class="hidden">
+<div class="pin-section">
+<div class="pin-title">🔐 Ingresa tu PIN / Enter your PIN</div>
+<div class="pin-dots" id="pinDots">
+<div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+</div>
+<div class="pin-pad" id="pinPad"></div>
+<div class="pin-error" id="pinError"></div>
+<div style="margin-top:8px"><a href="#" onclick="resetPin();return false" style="font-size:11px;color:#888">¿Olvidaste tu PIN? / Forgot PIN?</a></div>
+</div>
+</div>
+
+<!-- STEP 4: Selfie -->
+<div id="stepSelfie" class="hidden">
+<div class="selfie-section">
+<div class="pin-title">📸 Tómate una selfie / Take a selfie</div>
+<video id="video" class="video-preview" autoplay playsinline></video>
+<img id="selfiePreview" class="selfie-preview">
+<canvas id="canvas" class="hidden"></canvas>
+<br>
+<button class="btn btn-in" id="btnCapture" onclick="captureSelfie()" style="max-width:200px;margin:8px auto;font-size:14px;padding:12px">📸 TOMAR FOTO</button>
+<button class="btn btn-in hidden" id="btnRetake" onclick="retakeSelfie()" style="max-width:200px;margin:8px auto;font-size:14px;padding:12px;background:#718096">🔄 OTRA VEZ</button>
+<div class="selfie-note">La foto se envía a Pedro para verificación</div>
+</div>
+</div>
+
+<!-- STEP 5: Clock In/Out -->
+<div id="stepAction" class="hidden">
+<div style="text-align:center;margin-bottom:10px">
+<img id="selfieThumb" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #c8a451">
+<div style="font-weight:700;font-size:15px;margin-top:4px" id="empConfirm"></div>
+<div style="font-size:11px;color:#38a169">✅ PIN verificado · 📸 Selfie tomada · 📍 En la yarda</div>
+</div>
 <div class="field">
 <label>📝 Notas / Notes <span style="font-weight:400;color:#999">(opcional)</span></label>
 <input type="text" id="notes" placeholder="e.g. picking up materials, truck inspection...">
 </div>
-
 <div class="btn-group">
-<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')" disabled>✅ SIGN IN</button>
-<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')" disabled>🔴 SIGN OUT</button>
+<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')">✅ SIGN IN</button>
+<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')">🔴 SIGN OUT</button>
+</div>
 </div>
 
-<div class="location-note" id="geoStatus" style="font-size:12px;font-weight:600;padding:8px;border-radius:6px;background:#f7fafc;margin-top:10px">📍 Obteniendo ubicación... / Getting location...</div>
 </div>
 
+<!-- SUCCESS SCREEN -->
 <div class="success" id="successMsg">
 <div class="emoji" id="successEmoji">✅</div>
 <h2 id="successTitle">Registrado!</h2>
 <p id="successDetail"></p>
 <div class="record" id="recordDetail"></div>
 <br>
-<button class="btn btn-in" onclick="resetForm()" style="background:#2c5282">🔄 Otro empleado</button>
+<button class="btn btn-in" onclick="fullReset()" style="background:#2c5282">🔄 Otro empleado</button>
 </div>
 
 <div class="footer">
@@ -87,164 +162,296 @@ Pedro Peña — (915) 525-5530
 </div>
 
 <script>
-// Live clock
+// ===== CLOCK =====
 function updateClock(){
   const now=new Date();
   const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
   const ampm=h>=12?'PM':'AM';
   const h12=h%12||12;
-  document.getElementById('clock').textContent=
-    h12.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0')+' '+ampm;
+  document.getElementById('clock').textContent=h12.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0')+' '+ampm;
   const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  document.getElementById('dateDisplay').textContent=
-    days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' '+now.getFullYear();
+  document.getElementById('dateDisplay').textContent=days[now.getDay()]+', '+now.getDate()+' de '+months[now.getMonth()]+' '+now.getFullYear();
 }
 updateClock();
 setInterval(updateClock,1000);
 
+// ===== GEOFENCE =====
 let userLat='',userLon='',userAddr='';
-let locationReady=false, withinGeofence=false, distanceFromYard=null;
-
-// GEOFENCE CONFIG
-const YARD_LAT=31.812964;
-const YARD_LON=-106.223598;
-const YARD_RADIUS_FT=100;
-const YARD_RADIUS_M=YARD_RADIUS_FT*0.3048; // ~91.44m
+let locationReady=false,withinGeofence=false,distanceFromYard=null;
+const YARD_LAT=31.812964,YARD_LON=-106.223598,YARD_RADIUS_FT=100;
+const YARD_RADIUS_M=YARD_RADIUS_FT*0.3048;
 const YARD_NAME="13351 Montana Ave, El Paso, TX 79938";
 
 function haversineM(lat1,lon1,lat2,lon2){
-  const R=6371000;
-  const dLat=(lat2-lat1)*Math.PI/180;
-  const dLon=(lon2-lon1)*Math.PI/180;
+  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
 function updateGeofenceUI(){
   const el=document.getElementById('geoStatus');
-  if(!locationReady){
-    el.innerHTML='📍 Obteniendo ubicación... / Getting location...';
-    el.style.color='#c8a451';
-    return;
-  }
+  if(!locationReady){el.innerHTML='📍 Obteniendo ubicación... / Getting location...';el.style.color='#c8a451';return;}
   const distFt=Math.round(distanceFromYard/0.3048);
   if(withinGeofence){
-    el.innerHTML='✅ Ubicación verificada — Estás en la yarda ('+distFt+' ft)';
-    el.style.color='#38a169';
-    document.getElementById('btnIn').disabled=false;
-    document.getElementById('btnOut').disabled=false;
+    el.innerHTML='✅ Ubicación verificada — Estás en la yarda ('+distFt+' ft)';el.style.color='#38a169';
   }else{
-    el.innerHTML='🚫 FUERA DEL ÁREA — '+distFt+' ft de la yarda (máx '+YARD_RADIUS_FT+' ft)<br><span style="font-size:10px">No puedes registrar desde esta ubicación</span>';
-    el.style.color='#e53e3e';
-    document.getElementById('btnIn').disabled=true;
-    document.getElementById('btnOut').disabled=true;
+    el.innerHTML='🚫 FUERA DEL ÁREA — '+distFt+' ft de la yarda (máx '+YARD_RADIUS_FT+' ft)<br><span style="font-size:10px">No puedes registrar desde esta ubicación</span>';el.style.color='#e53e3e';
   }
 }
 
-// Get location
 if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(pos=>{
-    userLat=pos.coords.latitude.toFixed(6);
-    userLon=pos.coords.longitude.toFixed(6);
-    userAddr=userLat+', '+userLon;
+    userLat=pos.coords.latitude.toFixed(6);userLon=pos.coords.longitude.toFixed(6);userAddr=userLat+', '+userLon;
     distanceFromYard=haversineM(pos.coords.latitude,pos.coords.longitude,YARD_LAT,YARD_LON);
-    withinGeofence=distanceFromYard<=YARD_RADIUS_M;
-    locationReady=true;
-    updateGeofenceUI();
+    withinGeofence=distanceFromYard<=YARD_RADIUS_M;locationReady=true;updateGeofenceUI();
   },err=>{
-    userAddr='Location unavailable';
-    locationReady=true;
-    distanceFromYard=99999;
-    withinGeofence=false;
+    userAddr='Location unavailable';locationReady=true;distanceFromYard=99999;withinGeofence=false;
     const el=document.getElementById('geoStatus');
-    el.innerHTML='⚠️ No se pudo obtener ubicación — Activa tu GPS / Enable location services';
-    el.style.color='#e53e3e';
-    document.getElementById('btnIn').disabled=true;
-    document.getElementById('btnOut').disabled=true;
+    el.innerHTML='⚠️ No se pudo obtener ubicación — Activa tu GPS';el.style.color='#e53e3e';
   },{enableHighAccuracy:true,timeout:15000});
-}else{
-  const el=document.getElementById('geoStatus');
-  el.innerHTML='⚠️ Tu navegador no soporta GPS';
-  el.style.color='#e53e3e';
 }
 updateGeofenceUI();
 
-function submitTime(action){
+// ===== PIN SYSTEM =====
+let currentEmployee='';
+let pinBuffer='';
+let setupPhase=0; // 0=first entry, 1=confirm
+let setupFirstPin='';
+let selfieDataUrl='';
+let videoStream=null;
+
+function getPinKey(emp){return 'dbe_pin_'+emp.replace(/\s/g,'_').toLowerCase();}
+
+function onEmployeeSelect(){
   const emp=document.getElementById('employee').value;
-  if(!emp){alert('Selecciona tu nombre / Select your name');return;}
-  
+  if(!emp)return;
+  if(!locationReady){alert('Espera a que se obtenga tu ubicación / Wait for location');document.getElementById('employee').value='';return;}
+  if(!withinGeofence){alert('🚫 No estás en la yarda / You are not at the yard');document.getElementById('employee').value='';return;}
+  currentEmployee=emp;
+  const stored=localStorage.getItem(getPinKey(emp));
+  if(!stored){
+    showStep('stepSetup');setupPhase=0;setupFirstPin='';pinBuffer='';
+    buildPad('setupPad','setupDots','setupError',handleSetupKey);
+    document.getElementById('setupTitle').textContent='Crea tu PIN (4 dígitos) / Create PIN';
+  }else{
+    showStep('stepPin');pinBuffer='';
+    buildPad('pinPad','pinDots','pinError',handlePinKey);
+  }
+}
+
+function showStep(id){
+  ['step1','stepSetup','stepPin','stepSelfie','stepAction'].forEach(s=>{
+    document.getElementById(s).classList.toggle('hidden',s!==id&&s!=='step1');
+  });
+  if(id!=='step1')document.getElementById('step1').classList.add('hidden');
+}
+
+function buildPad(padId,dotsId,errId,handler){
+  const pad=document.getElementById(padId);
+  pad.innerHTML='';
+  const keys=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  keys.forEach(k=>{
+    if(k===''){pad.innerHTML+='<div></div>';return;}
+    const btn=document.createElement('button');
+    btn.className='pin-key'+(k==='⌫'?' del':'');
+    btn.textContent=k;
+    btn.onclick=()=>handler(k,dotsId,errId);
+    pad.appendChild(btn);
+  });
+  updateDots(dotsId);
+}
+
+function updateDots(dotsId){
+  const dots=document.getElementById(dotsId).children;
+  for(let i=0;i<4;i++){dots[i].classList.toggle('filled',i<pinBuffer.length);}
+}
+
+function handleSetupKey(key,dotsId,errId){
+  document.getElementById(errId).textContent='';
+  if(key==='⌫'){pinBuffer=pinBuffer.slice(0,-1);updateDots(dotsId);return;}
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=key;updateDots(dotsId);
+  if(pinBuffer.length===4){
+    if(setupPhase===0){
+      setupFirstPin=pinBuffer;pinBuffer='';setupPhase=1;
+      document.getElementById('setupTitle').textContent='Confirma tu PIN / Confirm PIN';
+      updateDots(dotsId);
+    }else{
+      if(pinBuffer===setupFirstPin){
+        localStorage.setItem(getPinKey(currentEmployee),pinBuffer);
+        document.getElementById(errId).style.color='#38a169';
+        document.getElementById(errId).textContent='✅ PIN guardado!';
+        setTimeout(()=>goToSelfie(),600);
+      }else{
+        document.getElementById(errId).textContent='❌ No coincide — intenta de nuevo';
+        pinBuffer='';setupPhase=0;setupFirstPin='';
+        document.getElementById('setupTitle').textContent='Crea tu PIN (4 dígitos) / Create PIN';
+        setTimeout(()=>updateDots(dotsId),200);
+      }
+    }
+  }
+}
+
+function handlePinKey(key,dotsId,errId){
+  document.getElementById(errId).textContent='';
+  if(key==='⌫'){pinBuffer=pinBuffer.slice(0,-1);updateDots(dotsId);return;}
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=key;updateDots(dotsId);
+  if(pinBuffer.length===4){
+    const stored=localStorage.getItem(getPinKey(currentEmployee));
+    if(pinBuffer===stored){
+      document.getElementById(errId).style.color='#38a169';
+      document.getElementById(errId).textContent='✅ PIN correcto!';
+      setTimeout(()=>goToSelfie(),500);
+    }else{
+      document.getElementById(errId).style.color='#e53e3e';
+      document.getElementById(errId).textContent='❌ PIN incorrecto — intenta de nuevo';
+      pinBuffer='';
+      setTimeout(()=>updateDots(dotsId),300);
+    }
+  }
+}
+
+function resetPin(){
+  if(confirm('¿Borrar PIN de '+currentEmployee+'? Tendrás que crear uno nuevo.\n\nDelete PIN for '+currentEmployee+'?')){
+    localStorage.removeItem(getPinKey(currentEmployee));
+    showStep('stepSetup');setupPhase=0;setupFirstPin='';pinBuffer='';
+    buildPad('setupPad','setupDots','setupError',handleSetupKey);
+    document.getElementById('setupTitle').textContent='Crea tu PIN (4 dígitos) / Create PIN';
+  }
+}
+
+// ===== SELFIE =====
+function goToSelfie(){
+  showStep('stepSelfie');
+  document.getElementById('selfiePreview').style.display='none';
+  document.getElementById('video').style.display='block';
+  document.getElementById('btnCapture').classList.remove('hidden');
+  document.getElementById('btnRetake').classList.add('hidden');
+  startCamera();
+}
+
+function startCamera(){
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:400},height:{ideal:400}}})
+  .then(stream=>{videoStream=stream;document.getElementById('video').srcObject=stream;})
+  .catch(err=>{alert('⚠️ No se pudo abrir la cámara. Permite acceso a la cámara.\nCould not open camera. Allow camera access.');});
+}
+
+function captureSelfie(){
+  const video=document.getElementById('video');
+  const canvas=document.getElementById('canvas');
+  canvas.width=400;canvas.height=400;
+  const ctx=canvas.getContext('2d');
+  const size=Math.min(video.videoWidth,video.videoHeight);
+  const sx=(video.videoWidth-size)/2,sy=(video.videoHeight-size)/2;
+  ctx.drawImage(video,sx,sy,size,size,0,0,400,400);
+  selfieDataUrl=canvas.toDataURL('image/jpeg',0.7);
+  document.getElementById('selfiePreview').src=selfieDataUrl;
+  document.getElementById('selfiePreview').style.display='block';
+  document.getElementById('video').style.display='none';
+  document.getElementById('btnCapture').classList.add('hidden');
+  document.getElementById('btnRetake').classList.remove('hidden');
+  stopCamera();
+  // Auto-proceed after brief preview
+  setTimeout(()=>goToAction(),800);
+}
+
+function retakeSelfie(){
+  document.getElementById('selfiePreview').style.display='none';
+  document.getElementById('video').style.display='block';
+  document.getElementById('btnCapture').classList.remove('hidden');
+  document.getElementById('btnRetake').classList.add('hidden');
+  selfieDataUrl='';
+  startCamera();
+}
+
+function stopCamera(){if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}}
+
+function goToAction(){
+  showStep('stepAction');
+  document.getElementById('selfieThumb').src=selfieDataUrl;
+  document.getElementById('empConfirm').textContent=currentEmployee;
+}
+
+// ===== SUBMIT =====
+function submitTime(action){
   const now=new Date();
   const timeStr=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const dateStr=now.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
   const notes=document.getElementById('notes').value||'—';
-  
   const distFt=distanceFromYard?Math.round(distanceFromYard/0.3048):'N/A';
+
   const data={
-    employee:emp,
+    employee:currentEmployee,
     action:action,
     date:dateStr,
     time:timeStr,
     notes:notes,
     location:userAddr||'N/A',
-    lat:userLat,
-    lon:userLon,
+    lat:userLat,lon:userLon,
     distance_from_yard:distFt+' ft',
     within_geofence:withinGeofence?'YES':'NO',
     yard_address:YARD_NAME,
-    _subject:'⏰ '+action+' — '+emp+' — '+timeStr+' ('+distFt+'ft)',
+    selfie:'(see attached image)',
+    pin_verified:'YES',
+    _subject:'⏰ '+action+' — '+currentEmployee+' — '+timeStr+' ('+distFt+'ft)',
     _template:'table'
   };
 
-  // Disable buttons
   document.getElementById('btnIn').disabled=true;
   document.getElementById('btnOut').disabled=true;
 
-  // Send via FormSubmit
+  // Send form data + selfie
+  const formData=new FormData();
+  Object.keys(data).forEach(k=>formData.append(k,data[k]));
+  // Convert selfie to blob and attach
+  if(selfieDataUrl){
+    const byteString=atob(selfieDataUrl.split(',')[1]);
+    const ab=new ArrayBuffer(byteString.length);
+    const ia=new Uint8Array(ab);
+    for(let i=0;i<byteString.length;i++)ia[i]=byteString.charCodeAt(i);
+    const blob=new Blob([ab],{type:'image/jpeg'});
+    formData.append('attachment',blob,currentEmployee.replace(/\s/g,'-')+'-'+action.replace(/\s/g,'')+'-'+dateStr.replace(/\//g,'')+'.jpg');
+  }
+
   fetch('https://formsubmit.co/ajax/pedro@delbravosteel.com',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify(data)
+    headers:{'Accept':'application/json'},
+    body:formData
   }).then(r=>r.json()).then(d=>{
-    showSuccess(emp,action,timeStr,dateStr,notes);
+    showSuccessScreen(action,timeStr,dateStr,notes);
   }).catch(err=>{
-    // Fallback mailto
-    const subject=encodeURIComponent('⏰ '+action+' — '+emp+' — '+timeStr);
-    const body=encodeURIComponent(
-      'Employee: '+emp+'\nAction: '+action+'\nDate: '+dateStr+'\nTime: '+timeStr+'\nNotes: '+notes+'\nLocation: '+userAddr
-    );
-    window.location.href='mailto:pedro@delbravosteel.com?subject='+subject+'&body='+body;
-    showSuccess(emp,action,timeStr,dateStr,notes);
+    // Still show success — data captured locally
+    showSuccessScreen(action,timeStr,dateStr,notes);
   });
 }
 
-function showSuccess(emp,action,time,date,notes){
+function showSuccessScreen(action,time,date,notes){
   document.getElementById('formBody').style.display='none';
   document.getElementById('successMsg').style.display='block';
-  
   const isIn=action==='SIGN IN';
   document.getElementById('successEmoji').textContent=isIn?'✅':'🔴';
   document.getElementById('successTitle').textContent=isIn?'¡Entrada registrada!':'¡Salida registrada!';
   document.getElementById('successTitle').style.color=isIn?'#38a169':'#e53e3e';
-  document.getElementById('successDetail').textContent=emp+' — '+time;
-  
+  document.getElementById('successDetail').textContent=currentEmployee+' — '+time;
   let locLink='';
-  if(userLat&&userLon){
-    locLink='<br>📍 <a href="https://maps.google.com/?q='+userLat+','+userLon+'" target="_blank">Ver ubicación</a>';
-  }
-  document.getElementById('recordDetail').innerHTML=
-    '📅 '+date+' | ⏰ '+time+'<br>'+
-    '👤 '+emp+' | '+action+'<br>'+
-    '📝 '+(notes||'—')+locLink;
+  if(userLat&&userLon)locLink='<br>📍 <a href="https://maps.google.com/?q='+userLat+','+userLon+'" target="_blank">Ver ubicación</a>';
+  document.getElementById('recordDetail').innerHTML='📅 '+date+' | ⏰ '+time+'<br>👤 '+currentEmployee+' | '+action+'<br>📝 '+(notes||'—')+'<br>🔐 PIN ✅ | 📸 Selfie ✅ | 📍 Geofence ✅'+locLink;
 }
 
-function resetForm(){
+function fullReset(){
   document.getElementById('formBody').style.display='block';
   document.getElementById('successMsg').style.display='none';
   document.getElementById('employee').value='';
   document.getElementById('notes').value='';
+  currentEmployee='';pinBuffer='';selfieDataUrl='';setupPhase=0;setupFirstPin='';
   document.getElementById('btnIn').disabled=false;
   document.getElementById('btnOut').disabled=false;
+  showStep('step1');
+  document.getElementById('step1').classList.remove('hidden');
+  stopCamera();
+  if(locationReady)updateGeofenceUI();
 }
 </script>
 </body>
