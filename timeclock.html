@@ -64,11 +64,11 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 </div>
 
 <div class="btn-group">
-<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')">✅ SIGN IN</button>
-<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')">🔴 SIGN OUT</button>
+<button class="btn btn-in" id="btnIn" onclick="submitTime('SIGN IN')" disabled>✅ SIGN IN</button>
+<button class="btn btn-out" id="btnOut" onclick="submitTime('SIGN OUT')" disabled>🔴 SIGN OUT</button>
 </div>
 
-<div class="location-note">📍 Tu ubicación será registrada automáticamente</div>
+<div class="location-note" id="geoStatus" style="font-size:12px;font-weight:600;padding:8px;border-radius:6px;background:#f7fafc;margin-top:10px">📍 Obteniendo ubicación... / Getting location...</div>
 </div>
 
 <div class="success" id="successMsg">
@@ -104,6 +104,43 @@ updateClock();
 setInterval(updateClock,1000);
 
 let userLat='',userLon='',userAddr='';
+let locationReady=false, withinGeofence=false, distanceFromYard=null;
+
+// GEOFENCE CONFIG
+const YARD_LAT=31.812500;
+const YARD_LON=-106.223654;
+const YARD_RADIUS_FT=300;
+const YARD_RADIUS_M=YARD_RADIUS_FT*0.3048; // ~91.44m
+const YARD_NAME="13351 Montana Ave, El Paso, TX 79938";
+
+function haversineM(lat1,lon1,lat2,lon2){
+  const R=6371000;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function updateGeofenceUI(){
+  const el=document.getElementById('geoStatus');
+  if(!locationReady){
+    el.innerHTML='📍 Obteniendo ubicación... / Getting location...';
+    el.style.color='#c8a451';
+    return;
+  }
+  const distFt=Math.round(distanceFromYard/0.3048);
+  if(withinGeofence){
+    el.innerHTML='✅ Ubicación verificada — Estás en la yarda ('+distFt+' ft)';
+    el.style.color='#38a169';
+    document.getElementById('btnIn').disabled=false;
+    document.getElementById('btnOut').disabled=false;
+  }else{
+    el.innerHTML='🚫 FUERA DEL ÁREA — '+distFt+' ft de la yarda (máx '+YARD_RADIUS_FT+' ft)<br><span style="font-size:10px">No puedes registrar desde esta ubicación</span>';
+    el.style.color='#e53e3e';
+    document.getElementById('btnIn').disabled=true;
+    document.getElementById('btnOut').disabled=true;
+  }
+}
 
 // Get location
 if(navigator.geolocation){
@@ -111,10 +148,27 @@ if(navigator.geolocation){
     userLat=pos.coords.latitude.toFixed(6);
     userLon=pos.coords.longitude.toFixed(6);
     userAddr=userLat+', '+userLon;
+    distanceFromYard=haversineM(pos.coords.latitude,pos.coords.longitude,YARD_LAT,YARD_LON);
+    withinGeofence=distanceFromYard<=YARD_RADIUS_M;
+    locationReady=true;
+    updateGeofenceUI();
   },err=>{
     userAddr='Location unavailable';
-  },{enableHighAccuracy:true,timeout:10000});
+    locationReady=true;
+    distanceFromYard=99999;
+    withinGeofence=false;
+    const el=document.getElementById('geoStatus');
+    el.innerHTML='⚠️ No se pudo obtener ubicación — Activa tu GPS / Enable location services';
+    el.style.color='#e53e3e';
+    document.getElementById('btnIn').disabled=true;
+    document.getElementById('btnOut').disabled=true;
+  },{enableHighAccuracy:true,timeout:15000});
+}else{
+  const el=document.getElementById('geoStatus');
+  el.innerHTML='⚠️ Tu navegador no soporta GPS';
+  el.style.color='#e53e3e';
 }
+updateGeofenceUI();
 
 function submitTime(action){
   const emp=document.getElementById('employee').value;
@@ -125,6 +179,7 @@ function submitTime(action){
   const dateStr=now.toLocaleDateString('en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
   const notes=document.getElementById('notes').value||'—';
   
+  const distFt=distanceFromYard?Math.round(distanceFromYard/0.3048):'N/A';
   const data={
     employee:emp,
     action:action,
@@ -134,7 +189,10 @@ function submitTime(action){
     location:userAddr||'N/A',
     lat:userLat,
     lon:userLon,
-    _subject:'⏰ '+action+' — '+emp+' — '+timeStr,
+    distance_from_yard:distFt+' ft',
+    within_geofence:withinGeofence?'YES':'NO',
+    yard_address:YARD_NAME,
+    _subject:'⏰ '+action+' — '+emp+' — '+timeStr+' ('+distFt+'ft)',
     _template:'table'
   };
 
