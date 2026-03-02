@@ -57,7 +57,7 @@ body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background
 <div class="container">
 <div class="header">
 <h1>🏗️ DEL BRAVO ERECTORS</h1>
-<div class="sub">TIME CLOCK — YARD</div>
+<div class="sub" id="siteLabel">TIME CLOCK</div>
 <div class="time" id="clock">--:--</div>
 <div class="date" id="dateDisplay">--</div>
 </div>
@@ -179,9 +179,13 @@ setInterval(updateClock,1000);
 // ===== GEOFENCE =====
 let userLat='',userLon='',userAddr='';
 let locationReady=false,withinGeofence=false,distanceFromYard=null;
-const YARD_LAT=31.812964,YARD_LON=-106.223598,YARD_RADIUS_FT=100;
-const YARD_RADIUS_M=YARD_RADIUS_FT*0.3048;
-const YARD_NAME="13351 Montana Ave, El Paso, TX 79938";
+// GEOFENCE ZONES — multiple job sites
+const ZONES=[
+  {name:'Yarda',lat:31.812964,lon:-106.223598,radiusFt:100},
+  {name:'Cotton Exchange',lat:31.835375,lon:-106.575469,radiusFt:100},
+];
+
+let closestZone=null;
 
 function haversineM(lat1,lon1,lat2,lon2){
   const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
@@ -189,24 +193,39 @@ function haversineM(lat1,lon1,lat2,lon2){
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
+function checkGeofence(lat,lon){
+  let best=null,bestDist=Infinity;
+  for(const z of ZONES){
+    const d=haversineM(lat,lon,z.lat,z.lon);
+    const rM=z.radiusFt*0.3048;
+    if(d<=rM) return {zone:z,dist:d,inside:true};
+    if(d<bestDist){bestDist=d;best=z;}
+  }
+  return {zone:best,dist:bestDist,inside:false};
+}
+
 function updateGeofenceUI(){
   const el=document.getElementById('geoStatus');
   if(!locationReady){el.innerHTML='📍 Obteniendo ubicación... / Getting location...';el.style.color='#c8a451';return;}
-  const distFt=Math.round(distanceFromYard/0.3048);
   if(withinGeofence){
-    el.innerHTML='✅ Ubicación verificada — Estás en la yarda ('+distFt+' ft)';el.style.color='#38a169';
+    const distFt=Math.round(distanceFromYard/0.3048);
+    el.innerHTML='✅ Ubicación verificada — <b>'+closestZone.name+'</b> ('+distFt+' ft)';el.style.color='#38a169';
+    document.getElementById('siteLabel').textContent='TIME CLOCK — '+closestZone.name.toUpperCase();
   }else{
-    el.innerHTML='🚫 FUERA DEL ÁREA — '+distFt+' ft de la yarda (máx '+YARD_RADIUS_FT+' ft)<br><span style="font-size:10px">No puedes registrar desde esta ubicación</span>';el.style.color='#e53e3e';
+    const distFt=Math.round(distanceFromYard/0.3048);
+    el.innerHTML='🚫 FUERA DEL ÁREA — '+distFt+' ft de '+closestZone.name+' (máx '+closestZone.radiusFt+' ft)<br><span style="font-size:10px">No puedes registrar desde esta ubicación</span>';el.style.color='#e53e3e';
   }
 }
 
 if(navigator.geolocation){
   navigator.geolocation.getCurrentPosition(pos=>{
     userLat=pos.coords.latitude.toFixed(6);userLon=pos.coords.longitude.toFixed(6);userAddr=userLat+', '+userLon;
-    distanceFromYard=haversineM(pos.coords.latitude,pos.coords.longitude,YARD_LAT,YARD_LON);
-    withinGeofence=distanceFromYard<=YARD_RADIUS_M;locationReady=true;updateGeofenceUI();
+    const result=checkGeofence(pos.coords.latitude,pos.coords.longitude);
+    closestZone=result.zone;distanceFromYard=result.dist;withinGeofence=result.inside;
+    locationReady=true;updateGeofenceUI();
   },err=>{
     userAddr='Location unavailable';locationReady=true;distanceFromYard=99999;withinGeofence=false;
+    closestZone={name:'N/A',radiusFt:0};
     const el=document.getElementById('geoStatus');
     el.innerHTML='⚠️ No se pudo obtener ubicación — Activa tu GPS';el.style.color='#e53e3e';
   },{enableHighAccuracy:true,timeout:15000});
@@ -390,9 +409,9 @@ function submitTime(action){
     notes:notes,
     location:userAddr||'N/A',
     lat:userLat,lon:userLon,
-    distance_from_yard:distFt+' ft',
+    distance:distFt+' ft',
     within_geofence:withinGeofence?'YES':'NO',
-    yard_address:YARD_NAME,
+    job_site:closestZone?closestZone.name:'N/A',
     selfie:'(see attached image)',
     pin_verified:'YES',
     _subject:'⏰ '+action+' — '+currentEmployee+' — '+timeStr+' ('+distFt+'ft)',
