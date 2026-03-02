@@ -337,13 +337,26 @@ function doSubmit(emp,action,selfie){
   const distFt=distanceFromYard?Math.round(distanceFromYard/0.3048):'N/A';
   const registeredBy=emp!==currentEmployee?currentEmployee:'self';
 
+  // Check hours worked
+  let hrsWorked='';let otFlag='';
+  const siKey=SIGNIN_KEY+'_'+emp.replace(/\s/g,'_');
+  const siStored=localStorage.getItem(siKey);
+  if(action==='SIGN OUT'&&siStored){
+    const elapsed=(Date.now()-parseInt(siStored))/(1000*60*60);
+    hrsWorked=elapsed.toFixed(1);
+    if(!MAX_HOURS_EXEMPT.includes(emp)&&elapsed>=MAX_HOURS){otFlag='⚠️ CAPPED AT 10 HRS (actual: '+hrsWorked+')';}
+    localStorage.removeItem(siKey);
+  }
+
   const data={
     employee:emp,action:action,date:dateStr,time:timeStr,notes:notes||'—',
     location:userAddr||'N/A',lat:userLat,lon:userLon,
     distance:distFt+' ft',within_geofence:withinGeofence?'YES':'NO',
     job_site:closestZone?closestZone.name:'N/A',
     device_linked:'YES',registered_by:registeredBy,
-    _subject:'⏰ '+action+' — '+emp+' — '+timeStr+' @ '+(closestZone?closestZone.name:''),
+    hours_worked:hrsWorked?hrsWorked+' hrs':'—',
+    overtime_flag:otFlag||'NONE',
+    _subject:'⏰ '+action+' — '+emp+' — '+timeStr+' @ '+(closestZone?closestZone.name:'')+(otFlag?' ⚠️OT':''),
     _template:'table'
   };
 
@@ -370,9 +383,37 @@ function checkSchedule(emp){
   return now.getHours()>=EARLIEST_HOUR;
 }
 
+// MAX HOURS RULE
+const MAX_HOURS=10;
+const MAX_HOURS_EXEMPT=['Tony Cisneros','Rogelio Enriquez','Saul Martinez'];
+const SIGNIN_KEY='dbe_signin_time';
+
+function checkMaxHours(emp){
+  if(MAX_HOURS_EXEMPT.includes(emp))return{ok:true};
+  const stored=localStorage.getItem(SIGNIN_KEY+'_'+emp.replace(/\s/g,'_'));
+  if(!stored)return{ok:true};
+  const signInTime=parseInt(stored);
+  const now=Date.now();
+  const hrsElapsed=(now-signInTime)/(1000*60*60);
+  if(hrsElapsed>=MAX_HOURS)return{ok:false,hrs:hrsElapsed.toFixed(1)};
+  return{ok:true};
+}
+
 function submitTime(action){
   if(!checkSchedule(currentEmployee)){
     alert('⚠️ No disponible antes de las 6:00 AM\nNot available before 6:00 AM');return;
+  }
+  // Save sign-in timestamp
+  if(action==='SIGN IN'){
+    localStorage.setItem(SIGNIN_KEY+'_'+currentEmployee.replace(/\s/g,'_'),Date.now().toString());
+  }
+  // At 10 hrs: auto-flag as max reached, record sign-out time as sign-in + 10hrs
+  if(action==='SIGN OUT'){
+    const check=checkMaxHours(currentEmployee);
+    if(!check.ok){
+      // Still allow sign-out but cap at 10 hrs and flag overtime
+      alert('⚠️ '+check.hrs+' hrs — Se registrará como 10 hrs (máximo).\nOvertime requiere aprobación de Pedro.\n\n'+check.hrs+' hrs — Will be logged as 10 hrs (max).\nOvertime requires Pedro approval.');
+    }
   }
   document.getElementById('btnIn').disabled=true;document.getElementById('btnOut').disabled=true;
   doSubmit(currentEmployee,action,selfieDataUrl);
