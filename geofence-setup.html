@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Del Bravo Erectors — Geofence Setup</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a2744}
+.header{text-align:center;padding:14px;background:#1a2744;color:#fff}
+.header h1{font-size:16px;color:#c8a451}
+.header p{font-size:11px;color:#ddd}
+#map{width:100%;height:55vh;border:3px solid #c8a451}
+.controls{padding:16px;background:#fff}
+.info{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px}
+.info .label{font-weight:700;color:#4a5568;font-size:11px;text-transform:uppercase}
+.info .value{font-size:15px;color:#1a2744;font-weight:600;margin-top:2px}
+.row{display:flex;gap:10px;margin-bottom:10px}
+.row .field{flex:1}
+.field label{display:block;font-size:12px;font-weight:600;color:#4a5568;margin-bottom:3px}
+.field input{width:100%;padding:8px;border:1.5px solid #d1d5db;border-radius:6px;font-size:14px}
+.field input:focus{outline:none;border-color:#c8a451}
+.btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#c8a451 0%,#b8943e 100%);color:#fff;font-size:16px;font-weight:700;border:none;border-radius:10px;cursor:pointer;margin-top:10px}
+.btn:active{transform:scale(.97)}
+.code-box{background:#1a2744;color:#c8a451;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;margin-top:12px;word-break:break-all;display:none}
+.note{font-size:11px;color:#888;text-align:center;margin-top:8px}
+.instructions{font-size:12px;color:#555;padding:8px 16px;background:#fffbea;border-left:3px solid #c8a451;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🏗️ GEOFENCE SETUP — Del Bravo Erectors</h1>
+<p>Toca el mapa para colocar el pin / Tap the map to place the pin</p>
+</div>
+
+<div class="instructions">
+📍 <strong>Instrucciones:</strong> Toca exactamente donde quieres el centro del radio. Ajusta el radio en pies. Copia las coordenadas y mándalas a Don Hierro.
+</div>
+
+<div id="map"></div>
+
+<div class="controls">
+<div class="info">
+<div class="label">📍 Coordenadas / Coordinates</div>
+<div class="value" id="coords">— Toca el mapa para seleccionar —</div>
+</div>
+
+<div class="row">
+<div class="field">
+<label>Latitud</label>
+<input type="text" id="lat" readonly placeholder="—">
+</div>
+<div class="field">
+<label>Longitud</label>
+<input type="text" id="lon" readonly placeholder="—">
+</div>
+<div class="field">
+<label>Radio (ft)</label>
+<input type="number" id="radius" value="300" min="50" max="2000" onchange="updateCircle()">
+</div>
+</div>
+
+<button class="btn" onclick="copyConfig()">📋 COPIAR CONFIGURACIÓN</button>
+
+<div class="code-box" id="codeBox"></div>
+<div class="note">Manda este mensaje a Don Hierro para actualizar el geofence</div>
+</div>
+
+<script>
+// Init map centered on current yard
+const map = L.map('map').setView([31.812500, -106.223654], 17);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 20,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// Satellite layer option
+const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 20,
+  attribution: '© Esri'
+});
+satellite.addTo(map);
+
+// Layer toggle
+L.control.layers({
+  "Satélite": satellite,
+  "Mapa": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:20})
+}).addTo(map);
+
+let marker = null;
+let circle = null;
+let pinLat = null;
+let pinLon = null;
+
+// Place initial marker at current yard
+placePin(31.812500, -106.223654);
+
+function placePin(lat, lng) {
+  pinLat = lat;
+  pinLon = lng;
+  
+  if(marker) map.removeLayer(marker);
+  if(circle) map.removeLayer(circle);
+  
+  marker = L.marker([lat, lng], {
+    draggable: true
+  }).addTo(map);
+  
+  marker.on('dragend', function(e) {
+    const pos = e.target.getLatLng();
+    pinLat = pos.lat;
+    pinLon = pos.lng;
+    updateDisplay();
+    updateCircle();
+  });
+  
+  updateDisplay();
+  updateCircle();
+}
+
+function updateDisplay() {
+  document.getElementById('lat').value = pinLat.toFixed(6);
+  document.getElementById('lon').value = pinLon.toFixed(6);
+  document.getElementById('coords').textContent = pinLat.toFixed(6) + ', ' + pinLon.toFixed(6);
+}
+
+function updateCircle() {
+  if(circle) map.removeLayer(circle);
+  const radiusFt = parseInt(document.getElementById('radius').value) || 300;
+  const radiusM = radiusFt * 0.3048;
+  
+  circle = L.circle([pinLat, pinLon], {
+    radius: radiusM,
+    color: '#c8a451',
+    fillColor: '#c8a451',
+    fillOpacity: 0.15,
+    weight: 2,
+    dashArray: '5,5'
+  }).addTo(map);
+}
+
+map.on('click', function(e) {
+  placePin(e.latlng.lat, e.latlng.lng);
+});
+
+function copyConfig() {
+  const radiusFt = document.getElementById('radius').value;
+  const config = '📍 GEOFENCE CONFIG:\n' +
+    'Lat: ' + pinLat.toFixed(6) + '\n' +
+    'Lon: ' + pinLon.toFixed(6) + '\n' +
+    'Radio: ' + radiusFt + ' ft\n' +
+    'Google Maps: https://maps.google.com/?q=' + pinLat.toFixed(6) + ',' + pinLon.toFixed(6);
+  
+  navigator.clipboard.writeText(config).then(() => {
+    const box = document.getElementById('codeBox');
+    box.style.display = 'block';
+    box.textContent = config;
+    alert('✅ Copiado! Mándalo por Telegram');
+  }).catch(() => {
+    const box = document.getElementById('codeBox');
+    box.style.display = 'block';
+    box.textContent = config;
+  });
+}
+</script>
+</body>
+</html>
