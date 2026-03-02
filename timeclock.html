@@ -360,7 +360,20 @@ function doSubmit(emp,action,selfie){
   .catch(()=>showSuccess(emp,action,timeStr,dateStr));
 }
 
+// SCHEDULE RULES
+const NO_RESTRICTION=['Tony Cisneros','Rogelio Enriquez','Saul Martinez'];
+const EARLIEST_HOUR=6; // 6:00 AM for everyone else
+
+function checkSchedule(emp){
+  if(NO_RESTRICTION.includes(emp))return true;
+  const now=new Date();
+  return now.getHours()>=EARLIEST_HOUR;
+}
+
 function submitTime(action){
+  if(action==='SIGN IN'&&!checkSchedule(currentEmployee)){
+    alert('⚠️ Sign in no disponible antes de las 6:00 AM\nSign in not available before 6:00 AM');return;
+  }
   document.getElementById('btnIn').disabled=true;document.getElementById('btnOut').disabled=true;
   doSubmit(currentEmployee,action,selfieDataUrl);
 }
